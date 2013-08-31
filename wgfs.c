@@ -34,24 +34,26 @@ static int wgfuse_perms(const char *path, struct stat *stbuf) {
 
 static int wgfuse_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi) {
 
+	DIR * dir;
 	char realpath[1024];
 
 	sprintf(realpath, "%s/%s", metadata_path, path);
 
-	DIR * dir = opendir(realpath);
-	struct dirent * dp;
 	filler(buf, ".", NULL, 0);
 	filler(buf, "..", NULL, 0);
 	filler(buf, "blacklist.txt", NULL, 0);
 	filler(buf, "config.yml", NULL, 0);
 	filler(buf, "regions.yml", NULL, 0);
-	while ((dp = readdir(dir)) != NULL) {
-		if (dp->d_type == DT_DIR) {
-			filler(buf, dp->d_name, NULL, 0);
+	if ((dir = opendir(realpath)) != NULL) {
+		struct dirent * dp;
+		while ((dp = readdir(dir)) != NULL) {
+			if (dp->d_type == DT_DIR) {
+				filler(buf, dp->d_name, NULL, 0);
+			}
 		}
+		closedir(dir);
 	}
 
-	closedir(dir);
 	return 0;
 }
 
